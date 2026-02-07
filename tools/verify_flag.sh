@@ -37,10 +37,10 @@ SUBMITTED=$(echo -n "$FLAG" | sha256sum | awk '{print $1}')
 
 if [ "$SUBMITTED" = "${HASHES[$CH]}" ]; then
     echo ""
-    echo "  ✅  CORRECT! Challenge $CH solved."
+    echo "  [+] CORRECT! Challenge $CH solved."
     echo ""
 else
     echo ""
-    echo "  ❌  Wrong flag for $CH. Keep digging."
+    echo "  [-] Wrong flag for $CH. Keep digging."
     echo ""
 fi
