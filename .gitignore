@@ -1,0 +1,14 @@
+# Binary files are distributed via GitHub Releases
+*.ko
+*.cpio.gz
+bzImage
+vmlinux
+
+# Build artifacts
+*.o
+*.mod
+*.mod.c
+*.cmd
+.tmp_versions/
+Module.symvers
+modules.order
