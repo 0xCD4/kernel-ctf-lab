@@ -108,7 +108,7 @@ Four commands. One creates, one destroys, one reads, one edits. But destruction 
 | --------- | ------------------------------------------------------------------------------ |
 | Device    | `/dev/vuln_race`                                                               |
 | Interface | `ioctl()` - two commands                                                       |
-| QEMU      | **Requires multi-core**: `./run.sh 4` or add `-smp 2`                          |
+| QEMU      | Multi-core enabled by default (`smp=2` at all levels)                          |
 | Hint      | *"The kernel reads your answer twice, but you can change it between glances."* |
 
 <details>
