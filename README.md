@@ -213,28 +213,6 @@ find . -print0 | cpio --null -o --format=newc | gzip -9 > ../initramfs.cpio.gz
 
 ---
 
-## Flag Verification
-
-Once you read `/root/flag.txt` inside the VM, verify your flag with the included tool:
-
-```bash
-./tools/verify_flag.sh ch01 "FLAG{your_flag_here}"
-```
-
-The script hashes your input with SHA-256 and compares it against the stored hash. It tells you if you got it right without revealing the actual answer. No network requests, everything runs locally.
-
-```
-  $ ./tools/verify_flag.sh ch01 "FLAG{wrong_flag}"
-    ❌  Wrong flag for ch01. Keep digging.
-
-  $ ./tools/verify_flag.sh ch01 "FLAG{correct_flag}"
-    ✅  CORRECT! Challenge ch01 solved.
-```
-
-Valid challenge IDs: `ch01` `ch02` `ch03` `ch04` `ch05`
-
----
-
 ## Download Challenge Binaries
 
 The `.ko` modules and `initramfs.cpio.gz` files are **not** in this repo. Download them from [**Releases**](https://github.com/0xCD4/kernel-ctf-lab/releases).
