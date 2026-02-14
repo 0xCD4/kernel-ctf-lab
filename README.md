@@ -239,6 +239,12 @@ Valid challenge IDs: `ch01` `ch02` `ch03` `ch04` `ch05`
 
 The `.ko` modules and `initramfs.cpio.gz` files are **not** in this repo. Download them from [**Releases**](https://github.com/0xCD4/kernel-ctf-lab/releases).
 
+After downloading, extract inside this repo:
+
+```bash
+tar xzf kernel-ctf-binaries-v1.0.tar.gz -C challenges/
+```
+
 ---
 
 *0xcd4 - https://0xcd4.github.io*
