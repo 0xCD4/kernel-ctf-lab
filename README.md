@@ -225,10 +225,10 @@ The script hashes your input with SHA-256 and compares it against the stored has
 
 ```
   $ ./tools/verify_flag.sh ch01 "FLAG{wrong_flag}"
-    [-] Wrong flag for ch01. Keep digging.
+    ❌  Wrong flag for ch01. Keep digging.
 
   $ ./tools/verify_flag.sh ch01 "FLAG{correct_flag}"
-    [+] CORRECT! Challenge ch01 solved.
+    ✅  CORRECT! Challenge ch01 solved.
 ```
 
 Valid challenge IDs: `ch01` `ch02` `ch03` `ch04` `ch05`
