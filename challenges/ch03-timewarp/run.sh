@@ -1,7 +1,4 @@
 #!/bin/bash
-# Usage: ./run.sh [level 0-4]
-# Levels: 0=easy(nothing) 1=SMEP 2=+KASLR 3=+SMAP 4=all(+KPTI)
-# Note: This challenge uses SMP=2 by default for race condition exploitation
 set -e
 LEVEL="${1:-0}"
 KERNEL="${KERNEL_PATH:-../../bzImage}"

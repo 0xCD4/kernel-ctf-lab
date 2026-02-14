@@ -15,19 +15,13 @@ if [ ! -f "$BZIMAGE" ]; then
     exit 1
 fi
 
-# Find compression offset
-offset=$(binwalk -y "raw gzip" -y "raw lzma" -y "raw xz" -y "raw bzip2" \
-         -y "raw lzop" -y "raw zstd" "$BZIMAGE" 2>/dev/null | \
-         grep -oP '^\d+' | head -1)
-
-if [ -z "$offset" ]; then
-    echo "[!] Could not find compressed data offset." >&2
-    exit 1
-fi
-
 # Try different decompression methods
-for cmd in gunzip unlzma "xz -d" bunzip2 lzop unzstd; do
-    if dd if="$BZIMAGE" bs=1 skip="$offset" 2>/dev/null | $cmd 2>/dev/null; then
+for cmd in unlzma lzop "xz -d" bunzip2 gunzip unzstd; do
+    offset=$(binwalk -y "raw gzip" -y "raw lzma" -y "raw xz" -y "raw bzip2" \
+             -y "raw lzop" -y "raw zstd" "$BZIMAGE" 2>/dev/null | \
+             grep -oP '^\d+' | head -1)
+    if [ -n "$offset" ]; then
+        dd if="$BZIMAGE" bs=1 skip="$offset" 2>/dev/null | $cmd 2>/dev/null
         exit 0
     fi
 done
