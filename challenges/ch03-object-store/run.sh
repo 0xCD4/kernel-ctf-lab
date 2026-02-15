@@ -1,6 +1,11 @@
 #!/bin/bash
+# Usage: ./run.sh [level 0-4]
+#
+# CH03 — Object Store: UAF → tty_struct hijack → stack pivot → ROP
+#
+# Level 3: SMEP + KASLR + SMAP (intended solve level for this challenge)
 set -e
-LEVEL="${1:-0}"
+LEVEL="${1:-3}"
 KERNEL="${KERNEL_PATH:-../../bzImage}"
 [ ! -f "$KERNEL" ] && echo "[!] bzImage not found. Place it at lab root or set KERNEL_PATH." && exit 1
 
@@ -14,7 +19,7 @@ case "$LEVEL" in
     *) echo "Level 0-4 only"; exit 1 ;;
 esac
 
-echo "[*] ch05-overflow - Level $LEVEL - GDB :1234"
+echo "[*] ch03-object-store - Level $LEVEL - GDB :1234"
 exec qemu-system-x86_64 \
     -m 256M -kernel "$KERNEL" -initrd ./initramfs.cpio.gz \
     -nographic $CPU -smp "$SMP" -append "$BOOT" \

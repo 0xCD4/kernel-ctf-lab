@@ -1,6 +1,6 @@
 # kernel-ctf-lab
 
-> 5 vulnerable kernel modules. Source code included. Build, load, reverse, exploit, get root.
+> 5 vulnerable kernel modules. Progressive mitigations. Realistic bugs. Get root.
 
 ## Rules
 
@@ -8,7 +8,7 @@
 - You start as **uid 1000**. The flag is at `/root/flag.txt` (root:400).
 - Source code is in `src/`. The real challenge is exploiting the compiled module without reading it first.
 - Use whatever tools you want: Ghidra, IDA, GDB, pwntools, ropper -- anything goes.
-- Start at **Level 0** (no mitigations). Once you get root, increase the level and do it again.
+- Each challenge has a **recommended level** where its intended technique applies. You can also run any challenge at any level for extra practice.
 
 ## Quick Start
 
@@ -21,7 +21,7 @@ cd kernel-ctf-lab
 
 sudo apt install -y qemu-system-x86 gdb gcc busybox-static
 
-cd challenges/ch01-stacksmasher
+cd challenges/ch01-echo-chamber
 ./run.sh 0
 ```
 
@@ -41,93 +41,112 @@ cp arch/x86/boot/bzImage ../
 
 Or run `./build.sh` to build everything from scratch.
 
+## Challenge Progression
+
+The challenges are designed as a coherent curriculum. Each one introduces exactly one new exploitation concept while building on everything learned before.
+
+```
+CH01  →  CH02  →  CH03  →  CH04  →  CH05
+ │        │        │        │        │
+ │        │        │        │        └─ + race conditions, + KPTI bypass
+ │        │        │        └─ + integer bugs, + data-only attacks, + canaries
+ │        │        └─ + heap exploitation, + SMAP bypass (stack pivot)
+ │        └─ + kernel ROP, + KASLR bypass, + SMEP
+ └─ ret2usr fundamentals
+```
+
 ## Challenges
 
-### ch01-stacksmasher -- difficulty 1/5
+### ch01-echo-chamber -- ret2usr fundamentals
 
-- **Device:** `/dev/hackme`
+- **Device:** `/dev/echo`
 - **Interface:** `read()` / `write()`
-- **Source:** `src/ch01-stacksmasher/vuln_stack.c`
-- **Hint:** Read more than you're given. Write more than you should.
+- **Source:** `src/ch01-echo-chamber/vuln_echo.c`
+- **Level:** 0 (no mitigations)
+- **New concept:** Basic kernel exploitation — stack layout, `commit_creds(prepare_kernel_cred(0))`, ret2usr
 
 <details>
-<summary>Nudge (try without this first)</summary>
+<summary>Hint</summary>
 
-The driver has two operations. One gives you too much. The other takes too much. What sits between your local variables and the return address?
+The driver stores your message on the stack. What happens when your message is larger than the buffer? Look at what sits between local variables and the return address. `/proc/kallsyms` tells you where everything lives.
 </details>
 
 ---
 
-### ch02-ghost-note -- difficulty 2/5
+### ch02-echo-chamber-v2 -- kernel ROP
 
-- **Device:** `/dev/vuln_uaf`
-- **Interface:** `ioctl()` -- 4 commands
-- **Source:** `src/ch02-ghost-note/vuln_uaf.c`
-- **Hint:** A ghost still haunts the room it died in. Who moves into a dead man's house?
+- **Device:** `/dev/echo2`
+- **Interface:** `read()` / `write()`
+- **Source:** `src/ch02-echo-chamber-v2/vuln_echo2.c`
+- **Level:** 2 (SMEP + KASLR)
+- **New concept:** SMEP bypass via ROP chain, KASLR bypass via info leak, gadget hunting
 
 <details>
-<summary>Nudge</summary>
+<summary>Hint</summary>
 
-Create, destroy, read, edit. Destruction isn't complete -- something lingers. The kernel has popular residents that are exactly 1024 bytes and full of function pointers. Open enough doors and one will move in.
+Same overflow as CH01, but ret2usr no longer works — SMEP prevents the CPU from executing userspace code in ring 0. The read handler gives you more bytes than the buffer contains. What's in those extra bytes? Once you know the kernel base, build a chain: `prepare_kernel_cred` → `commit_creds` → `swapgs_restore_regs_and_return_to_usermode`.
 </details>
 
 ---
 
-### ch03-timewarp -- difficulty 3/5
+### ch03-object-store -- heap exploitation (UAF)
 
-- **Device:** `/dev/vuln_race`
-- **Interface:** `ioctl()` -- 2 commands
-- **Source:** `src/ch03-timewarp/vuln_race.c`
-- **Note:** Needs multi-core. Runs with `-smp 2` by default.
-- **Hint:** The kernel reads your answer twice, but you can change it between glances.
+- **Device:** `/dev/objstore`
+- **Interface:** `ioctl()` -- 4 commands (create / read / write / delete)
+- **Source:** `src/ch03-object-store/vuln_objstore.c`
+- **Level:** 3 (SMEP + KASLR + SMAP)
+- **New concept:** Use-after-free, heap spray with `tty_struct`, stack pivot, SMAP bypass
 
 <details>
-<summary>Nudge</summary>
+<summary>Hint</summary>
 
-The driver validates your input, then reads it again to use it. What if the answer changes between the check and the use? Two threads, good timing. One command tells you where to look.
+Create an object, delete it, then read through the stale pointer. Objects are 1024 bytes — the same slab as `tty_struct`. Open `/dev/ptmx` repeatedly to spray tty structures into the freed slot. The `tty_operations` pointer leaks the kernel base. Overwrite it to redirect a tty operation to a stack-pivot gadget. SMAP blocks direct userspace memory access — your ROP chain must live in kernel memory.
 </details>
 
 ---
 
-### ch04-neighbors -- difficulty 3/5
+### ch04-secure-alloc -- data-only exploitation
 
-- **Device:** `/dev/vuln_heap`
-- **Interface:** `ioctl()` -- 4 commands
-- **Source:** `src/ch04-neighbors/vuln_heap.c`
-- **Hint:** Your neighbor's fence is 16 bytes too close.
+- **Device:** `/dev/secalloc`
+- **Interface:** `ioctl()` -- 4 commands (create / write / read / destroy)
+- **Source:** `src/ch04-secure-alloc/vuln_secalloc.c`
+- **Level:** 4 (SMEP + KASLR + SMAP + stack canaries)
+- **New concept:** Integer overflow in size arithmetic, heap OOB via `msg_msg`, `modprobe_path` overwrite — **no ROP required**
 
 <details>
-<summary>Nudge</summary>
+<summary>Hint</summary>
 
-Allocate objects on the heap. They sit next to each other. One operation lets you write a bit too far -- just enough to corrupt the neighbor. Once you control a pointer, there's a kernel string that decides what runs when the kernel meets an unknown binary format.
+The driver adds a 64-byte header to your requested size using 32-bit arithmetic. What happens when the sum wraps past `0xFFFFFFFF`? A tiny allocation with a huge recorded data size. Use `msgsnd`/`msgrcv` to groom the heap with `msg_msg` structures. Corrupt an adjacent `msg_msg` to build an arbitrary read. Find and overwrite `modprobe_path` — then trigger it with an unknown binary format. Stack canaries make ROP expensive; this challenge rewards a data-only approach.
 </details>
 
 ---
 
-### ch05-overflow -- difficulty 4/5
+### ch05-concurrent-log -- race conditions
 
-- **Device:** `/dev/vuln_intovf`
-- **Interface:** `ioctl()` -- 4 commands
-- **Source:** `src/ch05-overflow/vuln_intovf.c`
-- **Hint:** What happens when the sum of two large numbers becomes small?
+- **Device:** `/dev/conclog`
+- **Interface:** `ioctl()` -- 4 commands (alloc / read / write / put)
+- **Source:** `src/ch05-concurrent-log/vuln_conclog.c`
+- **Note:** Requires multi-core. All levels run with `-smp 2`.
+- **Level:** 4 (all mitigations)
+- **New concept:** Non-atomic refcount → double free, `userfaultfd`/FUSE for race stabilization, full exploit chain
 
 <details>
-<summary>Nudge</summary>
+<summary>Hint</summary>
 
-The driver allocates a buffer based on a size calculation. Size is a 32-bit number, and addition wraps around. A huge value plus another value equals a tiny value. Small allocation, huge write. The rest writes itself.
+The reference count is a plain `int`, not `atomic_t`. The decrement path uses a shared (read) lock — two CPUs can enter simultaneously. Race two threads on the put command: both read refcount=1, both decrement, both free. Use `userfaultfd` to widen the window. After the double free, reclaim with controlled data, build an arbitrary write, and combine everything from CH01-CH04 for the final chain.
 </details>
 
 ## Mitigation Levels
 
-Each challenge supports 5 difficulty levels via `./run.sh <level>`:
+Each challenge supports 5 difficulty levels via `./run.sh <level>`. Challenges default to their intended level but you can override.
 
-| Level | SMEP | SMAP | KASLR | KPTI | What it means |
+| Level | SMEP | SMAP | KASLR | KPTI | What you need |
 |-------|------|------|-------|------|---------------|
-| 0 | off | off | off | off | No protection. ret2usr works directly. |
-| 1 | on | off | off | off | Can't execute userspace code from ring 0. |
-| 2 | on | off | on | off | Kernel base is randomized. Need a leak. |
-| 3 | on | on | on | off | Can't access userspace memory from ring 0. |
-| 4 | on | on | on | on | Page tables separated. Need a clean return. |
+| 0 | off | off | off | off | ret2usr works directly. |
+| 1 | on | off | off | off | Can't execute userspace code from ring 0. Need ROP. |
+| 2 | on | off | on | off | Kernel base is randomized. Need an info leak. |
+| 3 | on | on | on | off | Can't access userspace memory from ring 0. Need stack pivot. |
+| 4 | on | on | on | on | Page tables separated. Need a clean return to userspace. |
 
 ## GDB
 
@@ -156,16 +175,16 @@ Kernel modules are ELF objects. Throw them into Ghidra or IDA. Look for:
 - struct layouts
 
 ```bash
-file challenges/ch01-stacksmasher/vuln_stack.ko
-readelf -s challenges/ch01-stacksmasher/vuln_stack.ko
+file challenges/ch01-echo-chamber/vuln_echo.ko
+readelf -s challenges/ch01-echo-chamber/vuln_echo.ko
 ```
 
 ## Loading Exploits
 
 ```bash
 gcc -static -o exploit exploit.c -lpthread
-./tools/inject_exploit.sh challenges/ch01-stacksmasher ./exploit
-cd challenges/ch01-stacksmasher && ./run.sh 0
+./tools/inject_exploit.sh challenges/ch01-echo-chamber ./exploit
+cd challenges/ch01-echo-chamber && ./run.sh 0
 # inside the VM: /home/ctf/exploit
 ```
 

@@ -5,7 +5,7 @@
 # Usage: ./scripts/create_initramfs.sh <challenge_name> <ko_file> <flag_text> [kernel_dir]
 #
 # Example:
-#   ./scripts/create_initramfs.sh ch01-stacksmasher vuln_stack.ko "FLAG{...}" ./linux-6.1.75
+#   ./scripts/create_initramfs.sh ch01-echo-chamber vuln_echo.ko "FLAG{...}" ./linux-6.1.75
 #
 set -e
 
@@ -34,11 +34,11 @@ fi
 MODULE_NAME="$(basename "$KO_FILE" .ko)"
 DEV_NAME=""
 case "$CHALLENGE" in
-    ch01-stacksmasher) DEV_NAME="hackme" ;;
-    ch02-ghost-note)   DEV_NAME="vuln_uaf" ;;
-    ch03-timewarp)     DEV_NAME="vuln_race" ;;
-    ch04-neighbors)    DEV_NAME="vuln_heap" ;;
-    ch05-overflow)     DEV_NAME="vuln_intovf" ;;
+    ch01-echo-chamber)    DEV_NAME="echo" ;;
+    ch02-echo-chamber-v2) DEV_NAME="echo2" ;;
+    ch03-object-store)    DEV_NAME="objstore" ;;
+    ch04-secure-alloc)    DEV_NAME="secalloc" ;;
+    ch05-concurrent-log)  DEV_NAME="conclog" ;;
     *) DEV_NAME="$MODULE_NAME" ;;
 esac
 

@@ -119,11 +119,11 @@ build_modules() {
     fi
 
     local challenges=(
-        "ch01-stacksmasher:vuln_stack"
-        "ch02-ghost-note:vuln_uaf"
-        "ch03-timewarp:vuln_race"
-        "ch04-neighbors:vuln_heap"
-        "ch05-overflow:vuln_intovf"
+        "ch01-echo-chamber:vuln_echo"
+        "ch02-echo-chamber-v2:vuln_echo2"
+        "ch03-object-store:vuln_objstore"
+        "ch04-secure-alloc:vuln_secalloc"
+        "ch05-concurrent-log:vuln_conclog"
     )
 
     for entry in "${challenges[@]}"; do
@@ -143,11 +143,11 @@ build_initramfs() {
     echo "  Building initramfs images"
     echo "============================================"
 
-    "$SCRIPT_DIR/scripts/create_initramfs.sh" ch01-stacksmasher vuln_stack.ko "$FLAG_CH01" "$KERNEL_DIR"
-    "$SCRIPT_DIR/scripts/create_initramfs.sh" ch02-ghost-note   vuln_uaf.ko   "$FLAG_CH02" "$KERNEL_DIR"
-    "$SCRIPT_DIR/scripts/create_initramfs.sh" ch03-timewarp     vuln_race.ko  "$FLAG_CH03" "$KERNEL_DIR"
-    "$SCRIPT_DIR/scripts/create_initramfs.sh" ch04-neighbors    vuln_heap.ko  "$FLAG_CH04" "$KERNEL_DIR"
-    "$SCRIPT_DIR/scripts/create_initramfs.sh" ch05-overflow     vuln_intovf.ko "$FLAG_CH05" "$KERNEL_DIR"
+    "$SCRIPT_DIR/scripts/create_initramfs.sh" ch01-echo-chamber    vuln_echo.ko     "$FLAG_CH01" "$KERNEL_DIR"
+    "$SCRIPT_DIR/scripts/create_initramfs.sh" ch02-echo-chamber-v2 vuln_echo2.ko    "$FLAG_CH02" "$KERNEL_DIR"
+    "$SCRIPT_DIR/scripts/create_initramfs.sh" ch03-object-store    vuln_objstore.ko "$FLAG_CH03" "$KERNEL_DIR"
+    "$SCRIPT_DIR/scripts/create_initramfs.sh" ch04-secure-alloc    vuln_secalloc.ko "$FLAG_CH04" "$KERNEL_DIR"
+    "$SCRIPT_DIR/scripts/create_initramfs.sh" ch05-concurrent-log  vuln_conclog.ko  "$FLAG_CH05" "$KERNEL_DIR"
 
     echo ""
     echo "[+] All initramfs images created."
@@ -164,16 +164,16 @@ package_release() {
 
     tar czf "$tarball" \
         bzImage \
-        challenges/ch01-stacksmasher/vuln_stack.ko \
-        challenges/ch01-stacksmasher/initramfs.cpio.gz \
-        challenges/ch02-ghost-note/vuln_uaf.ko \
-        challenges/ch02-ghost-note/initramfs.cpio.gz \
-        challenges/ch03-timewarp/vuln_race.ko \
-        challenges/ch03-timewarp/initramfs.cpio.gz \
-        challenges/ch04-neighbors/vuln_heap.ko \
-        challenges/ch04-neighbors/initramfs.cpio.gz \
-        challenges/ch05-overflow/vuln_intovf.ko \
-        challenges/ch05-overflow/initramfs.cpio.gz
+        challenges/ch01-echo-chamber/vuln_echo.ko \
+        challenges/ch01-echo-chamber/initramfs.cpio.gz \
+        challenges/ch02-echo-chamber-v2/vuln_echo2.ko \
+        challenges/ch02-echo-chamber-v2/initramfs.cpio.gz \
+        challenges/ch03-object-store/vuln_objstore.ko \
+        challenges/ch03-object-store/initramfs.cpio.gz \
+        challenges/ch04-secure-alloc/vuln_secalloc.ko \
+        challenges/ch04-secure-alloc/initramfs.cpio.gz \
+        challenges/ch05-concurrent-log/vuln_conclog.ko \
+        challenges/ch05-concurrent-log/initramfs.cpio.gz
 
     echo "[+] Release tarball: $tarball ($(du -h "$tarball" | cut -f1))"
     echo ""
@@ -215,5 +215,5 @@ echo "  Build complete!"
 echo "============================================"
 echo ""
 echo "Quick start:"
-echo "  cd challenges/ch01-stacksmasher && ./run.sh 0"
+echo "  cd challenges/ch01-echo-chamber && ./run.sh 0"
 echo ""

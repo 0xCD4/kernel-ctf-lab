@@ -1,4 +1,10 @@
 #!/bin/bash
+# Usage: ./run.sh [level 0-4]
+#
+# CH01 — Echo Chamber: stack buffer overflow, ret2usr
+#
+# Level 0: no mitigations (intended solve level for this challenge)
+# Levels 1-4: progressive mitigations (for extra practice)
 set -e
 LEVEL="${1:-0}"
 KERNEL="${KERNEL_PATH:-../../bzImage}"
@@ -14,7 +20,7 @@ case "$LEVEL" in
     *) echo "Level 0-4 only"; exit 1 ;;
 esac
 
-echo "[*] ch04-neighbors - Level $LEVEL - GDB :1234"
+echo "[*] ch01-echo-chamber - Level $LEVEL - GDB :1234"
 exec qemu-system-x86_64 \
     -m 256M -kernel "$KERNEL" -initrd ./initramfs.cpio.gz \
     -nographic $CPU -smp "$SMP" -append "$BOOT" \

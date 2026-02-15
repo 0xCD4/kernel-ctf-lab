@@ -1,6 +1,13 @@
 #!/bin/bash
+# Usage: ./run.sh [level 0-4]
+#
+# CH04 — Secure Allocator: integer overflow → heap OOB → data-only attack
+#
+# Level 4: SMEP + KASLR + SMAP + stack canaries (intended solve level)
+# Stack canaries make ROP expensive; the intended path is data-only
+# via modprobe_path.
 set -e
-LEVEL="${1:-0}"
+LEVEL="${1:-4}"
 KERNEL="${KERNEL_PATH:-../../bzImage}"
 [ ! -f "$KERNEL" ] && echo "[!] bzImage not found. Place it at lab root or set KERNEL_PATH." && exit 1
 
@@ -14,7 +21,7 @@ case "$LEVEL" in
     *) echo "Level 0-4 only"; exit 1 ;;
 esac
 
-echo "[*] ch02-ghost-note - Level $LEVEL - GDB :1234"
+echo "[*] ch04-secure-alloc - Level $LEVEL - GDB :1234"
 exec qemu-system-x86_64 \
     -m 256M -kernel "$KERNEL" -initrd ./initramfs.cpio.gz \
     -nographic $CPU -smp "$SMP" -append "$BOOT" \
