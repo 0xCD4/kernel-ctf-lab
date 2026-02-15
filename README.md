@@ -4,6 +4,15 @@
 
 ---
 
+> **WARNING: Challenge binaries are not yet available.** The `.ko` modules,
+> `initramfs.cpio.gz` files, and `bzImage` are **not included** in this repo and
+> have **not been uploaded** to the GitHub Release (v1.0 contains only scripts).
+> The release notes state: *".ko modules will be added once compiled on Linux."*
+> Until the binaries are published, the lab cannot be run. See the
+> [open issue](https://github.com/0xCD4/kernel-ctf-lab/issues) for status.
+
+---
+
 ## Rules
 
 - You receive **compiled `.ko` files only**. No source code.
