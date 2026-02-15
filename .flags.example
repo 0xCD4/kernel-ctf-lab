@@ -1,0 +1,13 @@
+# CTF Flag values — copy this file to .flags and fill in your flags.
+#
+#   cp .flags.example .flags
+#
+# .flags is gitignored and will NOT be committed.
+# Update verify_flag.sh hashes to match:
+#   echo -n 'FLAG{your_flag}' | sha256sum
+
+FLAG_CH01='FLAG{change_me_ch01}'
+FLAG_CH02='FLAG{change_me_ch02}'
+FLAG_CH03='FLAG{change_me_ch03}'
+FLAG_CH04='FLAG{change_me_ch04}'
+FLAG_CH05='FLAG{change_me_ch05}'
