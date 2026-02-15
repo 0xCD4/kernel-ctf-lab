@@ -4,15 +4,6 @@
 
 ---
 
-> **WARNING: Challenge binaries are not yet available.** The `.ko` modules,
-> `initramfs.cpio.gz` files, and `bzImage` are **not included** in this repo and
-> have **not been uploaded** to the GitHub Release (v1.0 contains only scripts).
-> The release notes state: *".ko modules will be added once compiled on Linux."*
-> Until the binaries are published, the lab cannot be run. See the
-> [open issue](https://github.com/0xCD4/kernel-ctf-lab/issues) for status.
-
----
-
 ## Rules
 
 - You receive **compiled `.ko` files only**. No source code.
@@ -224,13 +215,30 @@ find . -print0 | cpio --null -o --format=newc | gzip -9 > ../initramfs.cpio.gz
 
 ## Download Challenge Binaries
 
-The `.ko` modules and `initramfs.cpio.gz` files are **not** in this repo. Download them from [**Releases**](https://github.com/0xCD4/kernel-ctf-lab/releases).
-
-After downloading, extract inside this repo:
+**Option A** — Download pre-built binaries from [**Releases**](https://github.com/0xCD4/kernel-ctf-lab/releases):
 
 ```bash
+# Download and extract into challenges/
 tar xzf kernel-ctf-binaries-v1.0.tar.gz -C challenges/
 ```
+
+**Option B** — Build everything from source (instructors / contributors):
+
+```bash
+# Install build dependencies
+sudo apt install -y gcc make flex bison bc libelf-dev libssl-dev \
+                    busybox-static cpio wget qemu-system-x86
+
+# Full build: kernel + modules + initramfs
+./build.sh
+
+# Or modules only (if you already have a kernel tree at ./linux-6.1.75):
+./build.sh modules
+```
+
+The build script downloads Linux 6.1.75, compiles the kernel, builds all 5
+vulnerable `.ko` modules from `src/`, creates `initramfs.cpio.gz` for each
+challenge, and produces a release tarball.
 
 ---
 

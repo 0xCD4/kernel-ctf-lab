@@ -12,3 +12,10 @@ vmlinux
 .tmp_versions/
 Module.symvers
 modules.order
+
+# Kernel source tree (downloaded by build.sh)
+linux-*/
+*.tar.xz
+
+# Release tarball
+kernel-ctf-binaries-*.tar.gz
