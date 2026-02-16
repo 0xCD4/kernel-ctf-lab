@@ -58,16 +58,16 @@ CH01  →  CH02  →  CH03  →  CH04  →  CH05
 
 ### Why is kernel ROP introduced early?
 
-This lab teaches two exploit styles:
+This lab has two exploit styles:
 
 - CH01-CH03: control flow attacks (stack overflow, kernel ROP, stack pivot with SMAP).
 - CH04-CH05: data-only attacks (integer/race bugs, heap corruption, privilege gain without ROP).
 
-CH02 comes early on purpose. You learn safe return to user mode once, then use the same idea again in later levels.
+CH02 is early on purpose. You learn how to return to user mode one time, then reuse it later.
 
 ## Learning tracks (optional)
 
-If you want a simpler path, use one of these tracks:
+If you want a simple path, use one of these tracks:
 
 ### Track A - Control flow
 
@@ -80,7 +80,7 @@ If you want a simpler path, use one of these tracks:
 1. **CH04**: integer overflow to heap OOB and `modprobe_path`
 2. **CH05**: refcount race, double free, direct `cred` overwrite
 
-The normal order still works. These tracks are only an easier way to practice.
+The default order still works. These tracks are optional.
 
 ## Challenges
 
@@ -246,7 +246,7 @@ cd challenges/ch01-echo-chamber && ./run.sh 0
 # inside the VM: /shared/exploit
 ```
 
-All `run.sh` scripts already enable virtio-9p and mount `/shared` in init. You can test new exploits without rebuilding initramfs each time.
+All `run.sh` scripts already enable virtio-9p and mount `/shared` in init. So you can test new exploits without rebuilding initramfs each time.
 
 **Option 2: Inject into initramfs:**
 
@@ -271,7 +271,7 @@ sudo apt install -y gcc make flex bison bc libelf-dev libssl-dev \
 ## Notes on realism and variety
 
 - CH04 and CH05 can look similar because both can end in data-only privilege escalation. But they use different bug types and different targets (`msg_msg` + global target vs race + `pipe_buffer` + heap `cred` target).
-- Future updates can add harder heap grooming ideas, like stronger refcount patterns and less direct dangling pointers.
+- Future updates can add harder heap grooming ideas, such as stronger refcount patterns and less direct dangling pointers.
 
 ## Flag Verification
 
