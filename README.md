@@ -56,6 +56,32 @@ CH01  →  CH02  →  CH03  →  CH04  →  CH05
  └─ ret2usr fundamentals
 ```
 
+### Why is kernel ROP introduced early?
+
+This lab teaches two exploit styles:
+
+- CH01-CH03: control flow attacks (stack overflow, kernel ROP, stack pivot with SMAP).
+- CH04-CH05: data-only attacks (integer/race bugs, heap corruption, privilege gain without ROP).
+
+CH02 comes early on purpose. You learn safe return to user mode once, then use the same idea again in later levels.
+
+## Learning tracks (optional)
+
+If you want a simpler path, use one of these tracks:
+
+### Track A - Control flow
+
+1. **CH01**: ret2usr basics
+2. **CH02**: kernel ROP and KASLR leak
+3. **CH03**: heap UAF, stack pivot, SMAP limits
+
+### Track B - Data only
+
+1. **CH04**: integer overflow to heap OOB and `modprobe_path`
+2. **CH05**: refcount race, double free, direct `cred` overwrite
+
+The normal order still works. These tracks are only an easier way to practice.
+
 ## Challenges
 
 ### ch01-echo-chamber -- ret2usr fundamentals
@@ -64,7 +90,7 @@ CH01  →  CH02  →  CH03  →  CH04  →  CH05
 - **Interface:** `read()` / `write()`
 - **Source:** `src/ch01-echo-chamber/vuln_echo.c`
 - **Level:** 0 (no mitigations)
-- **New concept:** Basic kernel exploitation — stack layout, `commit_creds(prepare_kernel_cred(0))`, ret2usr
+- **New concept:** Basic kernel exploitation - stack layout, `commit_creds(prepare_kernel_cred(0))`, ret2usr
 
 <details>
 <summary>Hint</summary>
@@ -85,7 +111,7 @@ The driver stores your message on the stack. What happens when your message is l
 <details>
 <summary>Hint</summary>
 
-Same overflow as CH01, but ret2usr no longer works — SMEP prevents the CPU from executing userspace code in ring 0. The read handler gives you more bytes than the buffer contains. What's in those extra bytes? Once you know the kernel base, build a chain: `prepare_kernel_cred` → `commit_creds` → `swapgs_restore_regs_and_return_to_usermode`.
+Same overflow as CH01, but ret2usr no longer works - SMEP prevents the CPU from executing userspace code in ring 0. The read handler gives you more bytes than the buffer contains. What's in those extra bytes? Once you know the kernel base, build a chain: `prepare_kernel_cred` → `commit_creds` → `swapgs_restore_regs_and_return_to_usermode`.
 </details>
 
 ---
@@ -97,11 +123,12 @@ Same overflow as CH01, but ret2usr no longer works — SMEP prevents the CPU fro
 - **Source:** `src/ch03-object-store/vuln_objstore.c`
 - **Level:** 3 (SMEP + KASLR + SMAP)
 - **New concept:** Use-after-free, heap spray with `tty_struct`, stack pivot, SMAP bypass
+- **Design note:** This interface uses one ioctl copy for metadata and one copy for payload data. Many real drivers do this.
 
 <details>
 <summary>Hint</summary>
 
-Create an object, delete it, then read through the stale pointer. Objects are 1024 bytes — the same slab as `tty_struct`. Open `/dev/ptmx` repeatedly to spray tty structures into the freed slot. The `tty_operations` pointer leaks the kernel base. Overwrite it to redirect a tty operation to a stack-pivot gadget. SMAP blocks direct userspace memory access — your ROP chain must live in kernel memory.
+Create an object, delete it, then read through the stale pointer. Objects are 1024 bytes - the same slab as `tty_struct`. Open `/dev/ptmx` repeatedly to spray tty structures into the freed slot. The `tty_operations` pointer leaks the kernel base. Overwrite it to redirect a tty operation to a stack-pivot gadget. SMAP blocks direct userspace memory access - your ROP chain must live in kernel memory.
 </details>
 
 ---
@@ -112,12 +139,12 @@ Create an object, delete it, then read through the stale pointer. Objects are 10
 - **Interface:** `ioctl()` -- 4 commands (create / write / read / destroy)
 - **Source:** `src/ch04-secure-alloc/vuln_secalloc.c`
 - **Level:** 4 (SMEP + KASLR + SMAP + stack canaries)
-- **New concept:** Integer overflow in size arithmetic, heap OOB via `msg_msg`, `modprobe_path` overwrite — **no ROP required**
+- **New concept:** Integer overflow in size arithmetic, heap OOB via `msg_msg`, `modprobe_path` overwrite - **no ROP required**
 
 <details>
 <summary>Hint</summary>
 
-The driver adds a 64-byte header to your requested size using 32-bit arithmetic. What happens when the sum wraps past `0xFFFFFFFF`? A tiny allocation with a huge recorded data size. Use `msgsnd`/`msgrcv` to groom the heap with `msg_msg` structures. Corrupt an adjacent `msg_msg` to build an arbitrary read. Find and overwrite `modprobe_path` — then trigger it with an unknown binary format. Stack canaries make ROP expensive; this challenge rewards a data-only approach.
+The driver adds a 64-byte header to your requested size using 32-bit arithmetic. What happens when the sum wraps past `0xFFFFFFFF`? A tiny allocation with a huge recorded data size. Use `msgsnd`/`msgrcv` to groom the heap with `msg_msg` structures. Corrupt an adjacent `msg_msg` to build an arbitrary read. Find and overwrite `modprobe_path` - then trigger it with an unknown binary format. Stack canaries make ROP expensive; this challenge rewards a data-only approach.
 </details>
 
 ---
@@ -134,7 +161,7 @@ The driver adds a 64-byte header to your requested size using 32-bit arithmetic.
 <details>
 <summary>Hint</summary>
 
-The reference count is a plain `int`, not `atomic_t`. The decrement path uses a shared (read) lock — two CPUs can enter simultaneously. Race two threads on the put command: both read refcount=1, both decrement, both free. Use `userfaultfd` to widen the window. After the double free, spray with `pipe_buffer` structs (also kmalloc-256 -- use `pipe()` + `write()`). The `pipe_buffer->ops` pointer leaks the kernel base. Corrupt `pipe_buffer->page` for arbitrary read/write, then walk the task list to find your cred struct and zero out uid/gid. This is different from CH04: there you targeted `modprobe_path` (a global); here you target your process's `cred` struct (on the heap).
+The reference count is a plain `int`, not `atomic_t`. The decrement path uses a shared (read) lock - two CPUs can enter simultaneously. Race two threads on the put command: both read refcount=1, both decrement, both free. Use `userfaultfd` to widen the window. After the double free, spray with `pipe_buffer` structs (also kmalloc-256 -- use `pipe()` + `write()`). The `pipe_buffer->ops` pointer leaks the kernel base. Corrupt `pipe_buffer->page` for arbitrary read/write, then walk the task list to find your cred struct and zero out uid/gid. This is different from CH04: there you targeted `modprobe_path` (a global); here you target your process's `cred` struct (on the heap).
 </details>
 
 ## Mitigation Levels
@@ -201,7 +228,7 @@ KPTI separates kernel and user page tables. A plain `swapgs; iretq` will fault b
 swapgs_restore_regs_and_return_to_usermode
 ```
 
-Find it with `grep swapgs_restore_regs /proc/kallsyms`. Your ROP chain should jump into this function (skip the first few instructions that push registers — land at the `mov rdi, rsp` point). It handles the page table switch and `iretq` for you.
+Find it with `grep swapgs_restore_regs /proc/kallsyms`. Your ROP chain should jump into this function (skip the first few instructions that push registers - land at the `mov rdi, rsp` point). It handles the page table switch and `iretq` for you.
 
 Find the exact offset with GDB:
 ```
@@ -218,6 +245,8 @@ cp exploit challenges/ch01-echo-chamber/shared/
 cd challenges/ch01-echo-chamber && ./run.sh 0
 # inside the VM: /shared/exploit
 ```
+
+All `run.sh` scripts already enable virtio-9p and mount `/shared` in init. You can test new exploits without rebuilding initramfs each time.
 
 **Option 2: Inject into initramfs:**
 
@@ -238,6 +267,11 @@ sudo apt install -y gcc make flex bison bc libelf-dev libssl-dev \
 ./build.sh modules    # modules only (needs kernel tree)
 ./build.sh initramfs  # initramfs only (needs compiled .ko files)
 ```
+
+## Notes on realism and variety
+
+- CH04 and CH05 can look similar because both can end in data-only privilege escalation. But they use different bug types and different targets (`msg_msg` + global target vs race + `pipe_buffer` + heap `cred` target).
+- Future updates can add harder heap grooming ideas, like stronger refcount patterns and less direct dangling pointers.
 
 ## Flag Verification
 
