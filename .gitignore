@@ -1,0 +1,27 @@
+# Binary files are distributed via GitHub Releases
+*.ko
+*.cpio.gz
+bzImage
+vmlinux
+
+# Build artifacts
+*.o
+*.mod
+*.mod.c
+*.cmd
+.tmp_versions/
+Module.symvers
+modules.order
+
+# Kernel source tree (downloaded by build.sh)
+linux-*/
+*.tar.xz
+
+# Release tarball
+kernel-ctf-binaries-*.tar.gz
+
+# Shared folders (host↔VM via virtio-9p, user exploits go here)
+challenges/*/shared/
+
+# Flags (NEVER commit this — contains plaintext flags)
+.flags
