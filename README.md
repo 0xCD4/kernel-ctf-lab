@@ -56,6 +56,32 @@ CH01  →  CH02  →  CH03  →  CH04  →  CH05
  └─ ret2usr fundamentals
 ```
 
+### Why is kernel ROP introduced early?
+
+This lab teaches **control-flow takeover** and **data-only exploitation** as separate but connected skills.
+
+- CH01-CH03 are the control-flow path (stack BOF → kernel ROP → stack pivot under SMAP).
+- CH04-CH05 are the data-only path (integer/race bugs → heap primitives → privilege escalation without ROP).
+
+CH02 appears early on purpose so students learn clean kernel return mechanics once, then reuse that knowledge when needed (especially for CH03 on higher mitigation levels).
+
+## Learning Tracks (optional)
+
+If you prefer focused practice, run the modules as two parallel tracks:
+
+### Track A — Control-flow takeover
+
+1. **CH01**: ret2usr fundamentals
+2. **CH02**: kernel ROP (+ KASLR leak)
+3. **CH03**: heap UAF + stack pivot + SMAP constraints
+
+### Track B — Data-only exploitation
+
+1. **CH04**: integer overflow → heap OOB → `modprobe_path`
+2. **CH05**: refcount race → double free → direct `cred` overwrite
+
+The default linear order still works, but these tracks can reduce frustration if you want to specialize first.
+
 ## Challenges
 
 ### ch01-echo-chamber -- ret2usr fundamentals
@@ -97,6 +123,7 @@ Same overflow as CH01, but ret2usr no longer works — SMEP prevents the CPU fro
 - **Source:** `src/ch03-object-store/vuln_objstore.c`
 - **Level:** 3 (SMEP + KASLR + SMAP)
 - **New concept:** Use-after-free, heap spray with `tty_struct`, stack pivot, SMAP bypass
+- **Design note:** The interface intentionally uses separate ioctl metadata + payload copies to mimic common driver patterns where metadata and bulk data cross the boundary in different steps.
 
 <details>
 <summary>Hint</summary>
@@ -219,6 +246,8 @@ cd challenges/ch01-echo-chamber && ./run.sh 0
 # inside the VM: /shared/exploit
 ```
 
+All `run.sh` scripts already enable virtio-9p and mount `/shared` in init, so you can iterate on exploits without repacking initramfs each time.
+
 **Option 2: Inject into initramfs:**
 
 ```bash
@@ -238,6 +267,11 @@ sudo apt install -y gcc make flex bison bc libelf-dev libssl-dev \
 ./build.sh modules    # modules only (needs kernel tree)
 ./build.sh initramfs  # initramfs only (needs compiled .ko files)
 ```
+
+## Notes on challenge realism and variety
+
+- CH04 and CH05 may feel similar at a high level (both can end as data-only privilege escalation), but the bug classes and exploitation mechanics are intentionally different (`msg_msg`/global target vs race-driven `pipe_buffer`/heap cred target).
+- Future extensions are expected to add more heap-grooming depth (e.g., stronger refcount patterns, less direct dangling pointers, noisier object mixes) for students who want harder reliability problems.
 
 ## Flag Verification
 
