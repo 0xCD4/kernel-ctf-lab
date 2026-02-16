@@ -273,6 +273,19 @@ sudo apt install -y gcc make flex bison bc libelf-dev libssl-dev \
 - CH04 and CH05 can look similar because both can end in data-only privilege escalation. But they use different bug types and different targets (`msg_msg` + global target vs race + `pipe_buffer` + heap `cred` target).
 - Future updates can add harder heap grooming ideas, such as stronger refcount patterns and less direct dangling pointers.
 
+## If your PR does not show the latest README
+
+Use this quick check:
+
+```bash
+git fetch origin
+git checkout <your-branch>
+git rebase origin/<target-branch>
+git status
+```
+
+If GitHub still shows a conflict, resolve `README.md` locally, commit, and push again.
+
 ## Flag Verification
 
 ```bash
